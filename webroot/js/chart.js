@@ -4,46 +4,6 @@ Highcharts.setOptions({
     }
 });
 
-options = {
-    chart: {
-        renderTo: 'content',
-        type: 'spline'
-    },
-    title: {
-        text: 'Temperatures of the last 24h'
-    },
-    subtitle: {
-        text: ''
-    },
-    xAxis: {
-        type: 'datetime',
-        dateTimeLabelFormats: {
-            hour: '%H. %M',
-        }
-    },
-    yAxis: {
-        title: {
-            text: 'T (°C)'
-        }
-    },
-    tooltip: {
-        formatter: function() {
-            return '<b>' + this.series.name + '</b><br/>' + Highcharts.dateFormat('%H:%M', this.x) + ': ' + this.y.toFixed(1) + '°C';
-        }
-    },
-
-    plotOptions: {
-        series: {
-            marker: {
-                radius: 2
-            }
-        }
-    },
-
-    lineWidth: 1,
-
-    series: []
-}
 
 function computeSunrise(day, sunrise) {
 
@@ -136,3 +96,83 @@ function computeSunrise(day, sunrise) {
        var dayOfYear = today - yearFirstDay;
        return dayOfYear;
    }
+
+function draw_chart( url, title, yaxis ) {
+    var options = {
+	chart: {
+            renderTo: 'content',
+            type: 'spline'
+	},
+	xAxis: {
+            type: 'datetime',
+            dateTimeLabelFormats: {
+		hour: '%H. %M',
+            }
+	},
+	yAxis: {
+            title: {
+		text: ''
+            }
+	},
+	
+	plotOptions: {
+            series: {
+		marker: {
+                    radius: 2
+		}
+            }
+	},
+	
+	lineWidth: 1,
+	
+	series: []
+    };
+
+    $.ajax({
+        type: "GET",
+        url: url,
+        dataType: "xml",
+        success: function(xml) {
+	    var series = []
+	    
+	    //define series
+	    $(xml).find("entry").each(function() {
+		var seriesOptions = {
+		    name: $(this).text(),
+		    data: []
+		};
+		options.series.push(seriesOptions);
+	    });
+	    
+	    //populate with data
+	    $(xml).find("row").each(function() {
+		var t = parseInt($(this).find("t").text()) * 1000
+		
+		$(this).find("v").each(function(index) {
+		    var v = parseFloat($(this).text())
+		    v = v || null
+		    if (v != null) {
+			options.series[index].data.push([t, v])
+		    };
+		});
+	    });
+	    
+	    options.title = {text: title};
+	    options.yAxis.title = {
+		text: yaxis
+	    };
+	    
+	    options.tooltip = {
+		formatter: function() {
+		    return '<b>' + this.series.name + '</b><br/>' + Highcharts.dateFormat('%H:%M', this.x) + ': ' + this.y.toFixed(0) + " " + yaxis;
+		}
+	    },
+	    
+	    $.each(series, function(index) {
+		options.series.push(series[index]);
+	    });
+	    
+	    chart = new Highcharts.Chart(options);
+        }
+    });
+}
