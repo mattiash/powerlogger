@@ -21,10 +21,12 @@ sub export_data {
     my $key = ord('a'); 
     foreach my $sensor (@{$sensors}) {
 	my $keychar = chr($key);
-	$command .= "DEF:$keychar=$rrd:$sensor:AVERAGE " . 
-	    "XPORT:$keychar:\"$sensor\" ";
+	$command .= "DEF:$keychar=$rrd:$sensor:AVERAGE ";
+#	$command .  "XPORT:$keychar:\"$sensor\" ";
 	$key = $key + 1;
     }
+    $command .= "CDEF:x=a,b,c,+,+ XPORT:x:\"Garage\" ";
+    $command .= "CDEF:y=d,x,- XPORT:y:\"House\" ";
     system( "$command > $datadir/$file" );
 }
 

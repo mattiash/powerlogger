@@ -30,22 +30,26 @@ while(1) {
 	my $msg = parse_xml( $line );
 	
 	my $sensor = $msg->{msg}->{sensor};
+	if( not defined $sensor ) {
+	    next;
+	}
+
 	my $ch1 = 0 + $msg->{msg}->{ch1}->{watts};
 	my $ch2 = 0 + $msg->{msg}->{ch2}->{watts} if defined $msg->{msg}->{ch2};
 	my $ch3 = 0 + $msg->{msg}->{ch3}->{watts} if defined $msg->{msg}->{ch3};
 	
 	if( $sensor eq "9" ) {
-	    print "House total: $ch1 W\n";
+#	    print "House total: $ch1 W\n";
 	    $HouseTotal = $ch1;
 	}
 	elsif( $sensor eq "0" ) {
-	    print "Garage: $ch1 + $ch2 + $ch3 = " . ($ch1+$ch2+$ch3) . " W\n";
+#	    print "Garage: $ch1 + $ch2 + $ch3 = " . ($ch1+$ch2+$ch3) . " W\n";
 	    $Garage1 = $ch1;
 	    $Garage2 = $ch2;
 	    $Garage3 = $ch3;
 	}
 	else {
-	    print "Unknown: " . Dumper( $msg ) . "\n";
+#	    print "Unknown: " . Dumper( $msg ) . "\n";
 	}
 	
 	if( defined( $HouseTotal ) and defined( $Garage1 ) ) {
@@ -68,7 +72,10 @@ sub parse_xml {
 
 	my $tag = $1;
 	my $content = $2;
-	print "Failed to parse $str\n" if not defined $tag;
+	if( not defined $tag ) {
+#	    print "Failed to parse $str\n";
+	    return {};
+	}
 	$result->{$tag} = parse_xml( $content );
     }
 
