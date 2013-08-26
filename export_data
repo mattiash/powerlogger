@@ -1,32 +1,30 @@
 #!/usr/bin/perl -w
 
-my $sensors = [ qw/Garage1 Garage2 Garage3 HouseTotal/ ];
-my $rrd = "/srv/power/power.rrd";
 my $datadir = "/srv/power";
 
-export_data( "power3h.xml", "3h", 300, $sensors );
-export_data( "power24h.xml", "24h", 900, $sensors );
-export_data( "power48h.xml", "48h", 1800, $sensors );
-export_data( "power1w.xml", "8d", 7200, $sensors );
-export_data( "power1m.xml", "1month", 10800, $sensors );
-export_data( "power3m.xml", "3month", 43200, $sensors );
-export_data( "power1y.xml", "1y", 86400, $sensors );
+chdir( $datadir );
+export_data( "power3h.xml", "3h", 300 );
+export_data( "power24h.xml", "24h", 900 );
+export_data( "power48h.xml", "48h", 1800 );
+export_data( "power1w.xml", "8d", 7200 );
+export_data( "power1m.xml", "1month", 10800 );
+export_data( "power3m.xml", "3month", 43200 );
+export_data( "power1y.xml", "1y", 86400 );
 
 
 sub export_data {
-    my( $file, $length, $step, $sensors ) = @_;
+    my( $file, $length, $step ) = @_;
 
-    my $command = "rrdtool xport -s now-$length --step $step ";
-
-    my $key = ord('a'); 
-    foreach my $sensor (@{$sensors}) {
-	my $keychar = chr($key);
-	$command .= "DEF:$keychar=$rrd:$sensor:AVERAGE ";
-#	$command .  "XPORT:$keychar:\"$sensor\" ";
-	$key = $key + 1;
-    }
-    $command .= "CDEF:x=a,b,c,+,+ XPORT:x:\"Garage\" ";
-    $command .= "CDEF:y=d,x,- XPORT:y:\"House\" ";
-    system( "$command > $datadir/$file" );
+    my $command = "
+rrdtool xport -s now-$length --step $step
+DEF:g1=garage.rrd:ch1:AVERAGE
+DEF:g2=garage.rrd:ch2:AVERAGE
+DEF:g3=garage.rrd:ch3:AVERAGE
+DEF:t=total.rrd:ch1:AVERAGE
+CDEF:g=g1,g2,g3,+,+ XPORT:g:\"Garage\"
+CDEF:h=t,g,- XPORT:h:\"House\"
+";
+    $command =~ tr/\n/ /;
+    system( "$command > $file" );
 }
 

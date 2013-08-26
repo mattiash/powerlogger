@@ -5,7 +5,7 @@ use POSIX qw(strftime);
 use Data::Dumper;
 use IO::Socket::INET;
 
-my $rrd = "/srv/power/power.rrd";
+my $rrddir = "/srv/power";
 
 # auto-flush on socket
 $| = 1;
@@ -24,8 +24,6 @@ while(1) {
 	next;
     }
 
-    my( $Garage1, $Garage2, $Garage3, $HouseTotal );
-
     while ( my $line = <$socket> ) {
 	my $msg = parse_xml( $line );
 	
@@ -39,21 +37,13 @@ while(1) {
 	my $ch3 = 0 + $msg->{msg}->{ch3}->{watts} if defined $msg->{msg}->{ch3};
 	
 	if( $sensor eq "9" ) {
-#	    print "House total: $ch1 W\n";
-	    $HouseTotal = $ch1;
+	    qx(rrdtool update $rrddir/total.rrd N:$ch1);
 	}
 	elsif( $sensor eq "0" ) {
-#	    print "Garage: $ch1 + $ch2 + $ch3 = " . ($ch1+$ch2+$ch3) . " W\n";
-	    $Garage1 = $ch1;
-	    $Garage2 = $ch2;
-	    $Garage3 = $ch3;
+	    qx(rrdtool update $rrddir/garage.rrd N:$ch1:$ch2:$ch3);
 	}
 	else {
 #	    print "Unknown: " . Dumper( $msg ) . "\n";
-	}
-	
-	if( defined( $HouseTotal ) and defined( $Garage1 ) ) {
-	    qx(rrdtool update $rrd N:$Garage1:$Garage2:$Garage3:$HouseTotal);
 	}
     }
     $socket->close();
