@@ -38,12 +38,14 @@ while(1) {
 	
 	if( $sensor eq "9" ) {
 	    qx(rrdtool update $rrddir/total.rrd N:$ch1);
+	    print "Total: $ch1\n";
 	}
 	elsif( $sensor eq "0" ) {
 	    qx(rrdtool update $rrddir/garage.rrd N:$ch1:$ch2:$ch3);
+	    print "Garage: " . ($ch1+$ch2+$ch3) . "\n";
 	}
 	else {
-#	    print "Unknown: " . Dumper( $msg ) . "\n";
+	  print "Unknown: " . Dumper( $msg ) . "\n";
 	}
     }
     $socket->close();
@@ -58,15 +60,15 @@ sub parse_xml {
     }
 
     while( length($str) > 2 ) {
-	$str =~ s%^\<([a-z0-9]+)\>(.*?)\</\g1\>%%;
-
+      if( $str =~ s%^\<([a-z0-9]+)\>(.*?)\</\g1\>%% ) {
 	my $tag = $1;
 	my $content = $2;
-	if( not defined $tag ) {
-#	    print "Failed to parse $str\n";
-	    return {};
-	}
 	$result->{$tag} = parse_xml( $content );
+      }
+      else {
+	print "Failed to parse $str\n";
+	return {};
+      }
     }
 
     return $result;
