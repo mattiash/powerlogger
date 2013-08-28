@@ -1,5 +1,13 @@
 #!/usr/bin/perl -w
 
+=pod
+
+Sensorn i garaget verkar överskatta förbrukningen. Det syntes genom att husets förbrukning
+under natten gick ner när garagets förbrukning gick upp. Jag antog att husets förbrukning var
+konstant hela natten och prövade mig fram till en faktor som gjorde att husets förbrukning hölls någorlunda konstant hela natten. Faktorn blev 0.75.
+
+=cut
+
 my $datadir = "/srv/power";
 
 chdir( $datadir );
@@ -21,7 +29,7 @@ DEF:g1=garage.rrd:ch1:AVERAGE
 DEF:g2=garage.rrd:ch2:AVERAGE
 DEF:g3=garage.rrd:ch3:AVERAGE
 DEF:t=total.rrd:ch1:AVERAGE
-CDEF:g=g1,g2,g3,+,+ XPORT:g:\"Garage\"
+CDEF:g=g1,g2,g3,+,+,0.75,* XPORT:g:\"Garage\"
 CDEF:h=t,g,- XPORT:h:\"House\"
 ";
     $command =~ tr/\n/ /;
