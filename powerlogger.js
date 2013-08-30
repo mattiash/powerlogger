@@ -1,10 +1,39 @@
 var net = require('net');
 var xml2js = require('xml2js');
 var rrd = require('../node_rrd/lib/rrd');
+var app = require('http').createServer(handler)
+, io = require('socket.io').listen(app)
+, fs = require('fs');
 
 var HOST = 'rpi1';
 var PORT = 12346;
 var rrddir = "/srv/power";
+var garage_factor = 0.75;
+
+var total = 0;
+var garage = 0;
+var house = 0;
+
+io.set('log level', 1);
+
+app.listen(8000);
+
+function handler (req, res) {
+  fs.readFile(__dirname + '/socket-io-client.html',
+  function (err, data) {
+    if (err) {
+      res.writeHead(500);
+      return res.end('Error loading index.html');
+    }
+
+    res.writeHead(200);
+    res.end(data);
+  });
+}
+
+io.sockets.on('connection', function (socket) {
+    socket.emit('power', { garage: garage, house: house });
+});
 
 var client = new net.Socket();
 client.connect(PORT, HOST, function() {
@@ -58,14 +87,20 @@ function decode_msg( msg ) {
 		ch3 = parseInt(msg.msg.ch3.watts);
 	    
 	    if( sensor === "9" ) {
-		console.log( "Total: " + ch1 );
+//		console.log( "Total: " + ch1 );
+		total = ch1;
+		house = total - garage;
+
 		rrd.update( rrddir + "/total.rrd", "ch1", [["N", ch1].join(":")], 
 			    function (error) { 
 				if (error) console.log("Error:", error);
 			    });
 	    }
 	    else if( sensor === "0" ) {
-		console.log( "Garage: " + (ch1+ch2+ch3) );
+//		console.log( "Garage: " + (ch1+ch2+ch3) );
+		garage = Math.round((ch1+ch2+ch3) * garage_factor);
+		house = total - garage;
+
 		rrd.update( rrddir + "/garage.rrd", "ch1:ch2:ch3", [["N", ch1,ch2,ch3].join(":")], 
 			    function (error) { 
 				if (error) console.log("Error:", error);
@@ -74,6 +109,7 @@ function decode_msg( msg ) {
 	    else {
 		console.log( "Unknown: ", msg );
 	    }
+	    io.sockets.emit('power', { garage: garage, house: house });
 	}
     }
     else {
