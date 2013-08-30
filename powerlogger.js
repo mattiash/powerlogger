@@ -1,8 +1,10 @@
 var net = require('net');
 var xml2js = require('xml2js');
+var rrd = require('../node_rrd/lib/rrd');
 
 var HOST = 'rpi1';
 var PORT = 12346;
+var rrddir = "/srv/power";
 
 var client = new net.Socket();
 client.connect(PORT, HOST, function() {
@@ -33,30 +35,49 @@ client.on('close', function() {
 
 function parse_msg( line ) {
     parser.parseString(line, function (err, result) {
-	decode_msg(result);
+	if( err ) {
+	    console.log( err );
+	}
+	else {
+	    decode_msg(result);
+	}
     });
 }
 
 function decode_msg( msg ) {
-    var sensor = msg.msg.sensor;
-    var ch1, ch2, ch3;
-
-    if( sensor ) {
-	ch1 = parseInt(msg.msg.ch1.watts);
-	if( msg.msg.ch2 )
-	    ch2 = parseInt(msg.msg.ch2.watts);
-
-	if( msg.msg.ch3 )
-	    ch3 = parseInt(msg.msg.ch3.watts);
+    if( msg && msg.msg ) {
+	var sensor = msg.msg.sensor;
+	var ch1, ch2, ch3;
 	
-	if( sensor === "9" ) {
-	    console.log( "Total: " + ch1 );
-	}
-	else if( sensor === "0" ) {
-	    console.log( "Garage: " + (ch1+ch2+ch3) );
-	}
-	else {
-	    console.log( "Unknown: ", msg );
+	if( sensor ) {
+	    ch1 = parseInt(msg.msg.ch1.watts);
+	    if( msg.msg.ch2 )
+		ch2 = parseInt(msg.msg.ch2.watts);
+	    
+	    if( msg.msg.ch3 )
+		ch3 = parseInt(msg.msg.ch3.watts);
+	    
+	    if( sensor === "9" ) {
+		console.log( "Total: " + ch1 );
+		rrd.update( rrddir + "/total.rrd", "ch1", [["N", ch1].join(":")], 
+			    function (error) { 
+				if (error) console.log("Error:", error);
+			    });
+	    }
+	    else if( sensor === "0" ) {
+		console.log( "Garage: " + (ch1+ch2+ch3) );
+		rrd.update( rrddir + "/garage.rrd", "ch1:ch2:ch3", [["N", ch1,ch2,ch3].join(":")], 
+			    function (error) { 
+				if (error) console.log("Error:", error);
+			    });
+	    }
+	    else {
+		console.log( "Unknown: ", msg );
+	    }
 	}
     }
+    else {
+	console.log( "Unknown: ", msg );
+    }
 }
+    
