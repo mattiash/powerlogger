@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo "http://127.0.0.1:8087"
+/usr/sbin/lighttpd -f ./lighttpd.conf -D
