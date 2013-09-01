@@ -63,7 +63,7 @@
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/highcharts/2.3.5/highcharts.js"></script>
     <script type="text/javascript" src="js/chart.js" charset="utf-8"></script>
-    <script src="http://localhost:8000/socket.io/socket.io.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script>
     </script>
 
@@ -92,7 +92,7 @@
         $scope.draw_chart( $scope.data.current_item );
         $scope.power = {};
 
-        var socket = io.connect('http://localhost:8000');
+        var socket = io.connect('http://power.holmlund.se');
         socket.on('power', function (data) {
            $scope.$apply( function() {
              $scope.power.garage = data.garage;
