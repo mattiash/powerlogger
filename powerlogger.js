@@ -1,9 +1,49 @@
 var net = require('net');
 var xml2js = require('xml2js');
 var rrd = require('../node_rrd/lib/rrd');
-var app = require('http').createServer(handler)
-, io = require('socket.io').listen(app)
-, fs = require('fs');
+var spawn = require('child_process').spawn;
+
+var app = require('express')()
+    , server = require('http').createServer(app)
+    , io = require('socket.io').listen(server);
+
+var datasets = {
+    "3h": ["3h", 300],
+    "24h": ["24h", 900],
+    "48h": ["48h", 1800],
+    "1w":  ["8d", 7200],
+    "1m": [ "1month", 10800],
+    "3m": [ "3month", 43200],
+    "1y": [ "1y", 86400]
+};
+
+server.listen(8000);
+
+app.get('/', function (req, res) {
+	res.sendfile(__dirname + '/index.html');
+    });
+
+app.get("/data/:data", function(req, res){
+	var p = datasets[req.params.data];
+	var child = spawn("rrdtool", 
+			  ['xport', '-s', 'now-'+p[0], '--step', p[1],
+			   'DEF:g1=/srv/power/garage.rrd:ch1:AVERAGE',
+			   'DEF:g2=/srv/power/garage.rrd:ch2:AVERAGE',
+			   'DEF:g3=/srv/power/garage.rrd:ch3:AVERAGE',
+			   'DEF:t=/srv/power/total.rrd:ch1:AVERAGE',
+			   'CDEF:g=g1,g2,g3,+,+,0.75,*',
+			   'XPORT:g:Garage',
+			   'CDEF:h=t,g,-',
+			   'XPORT:h:House'
+			   ] );
+	res.set("Content-Type", "application/xml" );
+	child.stdout.on('data', function (data) { res.write(data); return 1 });
+	child.stdout.on('end', function () { res.end() });
+    }
+    );
+
+app.enable( 'trust proxy' );
+
 
 var HOST = 'rpi1';
 var PORT = 12346;
@@ -15,8 +55,6 @@ var garage = 0;
 var house = 0;
 
 io.set('log level', 1);
-
-app.listen(8000);
 
 function handler (req, res) {
   fs.readFile(__dirname + '/socket-io-client.html',

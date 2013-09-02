@@ -1,0 +1,11 @@
+{
+  "name": "powerlogger",
+  "description": "powerlogger",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "express": "3.3.7",
+    "xml2js": "0.2.8",
+    "socket.io": "0.9.16"
+  }
+}
