@@ -118,6 +118,7 @@ function draw_chart( url, title, yaxis ) {
 	
 	plotOptions: {
             series: {
+		animation: false,
 		marker: {
                     radius: 4
 		}
