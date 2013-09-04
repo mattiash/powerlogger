@@ -3,7 +3,9 @@ var xml2js = require('xml2js');
 var rrd = require('../node_rrd/lib/rrd');
 var spawn = require('child_process').spawn;
 
-var app = require('express')()
+
+var express=require('express')
+    , app = express()
     , server = require('http').createServer(app)
     , io = require('socket.io').listen(server);
 
