@@ -101,12 +101,13 @@ function draw_chart( url, title, yaxis ) {
     var options = {
 	chart: {
             renderTo: 'content',
-            type: 'spline'
+            type: 'line'
 	},
 	xAxis: {
             type: 'datetime',
             dateTimeLabelFormats: {
-		hour: '%H. %M',
+		hour: '%H:%M',
+		day: '%y-%m-%d'
             }
 	},
 	yAxis: {
@@ -118,7 +119,7 @@ function draw_chart( url, title, yaxis ) {
 	plotOptions: {
             series: {
 		marker: {
-                    radius: 2
+                    radius: 4
 		}
             }
 	},
@@ -161,10 +162,12 @@ function draw_chart( url, title, yaxis ) {
 	    options.yAxis.title = {
 		text: yaxis
 	    };
+
+	    options.yAxis.min = 0;
 	    
 	    options.tooltip = {
 		formatter: function() {
-		    return '<b>' + this.series.name + '</b><br/>' + Highcharts.dateFormat('%H:%M', this.x) + ': ' + this.y.toFixed(0) + " " + yaxis;
+		    return '<b>' + this.series.name + '</b>' + ' ' + this.y.toFixed(0) + " " + yaxis + '<br/>' + Highcharts.dateFormat('%y-%m-%d %H:%M', this.x);
 		}
 	    },
 	    

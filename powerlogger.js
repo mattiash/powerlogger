@@ -8,12 +8,12 @@ var app = require('express')()
     , io = require('socket.io').listen(server);
 
 var datasets = {
-    "3h": ["3h", 300],
-    "24h": ["24h", 900],
-    "48h": ["48h", 1800],
-    "1w":  ["8d", 7200],
-    "1m": [ "1month", 10800],
-    "3m": [ "3month", 43200],
+    "3h": ["3h", 30],
+    "24h": ["24h", 30],
+    "48h": ["48h", 30],
+    "1w":  ["8d", 86400],
+    "1m": [ "1month", 86400],
+    "3m": [ "3month", 86400],
     "1y": [ "1y", 86400]
 };
 
@@ -26,7 +26,7 @@ app.get('/', function (req, res) {
 app.get("/data/:data", function(req, res){
 	var p = datasets[req.params.data];
 	var child = spawn("rrdtool", 
-			  ['xport', '-s', 'now-'+p[0], '--step', p[1],
+			  ['xport', '-m', '10000', '-s', 'now-'+p[0], '--step', p[1],
 			   'DEF:g1=/srv/power/garage.rrd:ch1:AVERAGE',
 			   'DEF:g2=/srv/power/garage.rrd:ch2:AVERAGE',
 			   'DEF:g3=/srv/power/garage.rrd:ch3:AVERAGE',
