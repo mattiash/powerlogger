@@ -120,7 +120,7 @@ function draw_chart( url, title, yaxis ) {
             series: {
 		animation: false,
 		marker: {
-                    radius: 4
+                    radius: 1
 		}
             }
 	},
