@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # --step 1
 #
@@ -11,7 +11,7 @@
 # Max per 24h period for the last 10 years
 # RRA:MAX:0.5:86400:3650
 
-rrdtool create /srv/power/garage.rrd --step 1 \
+[ -f /srv/power/garage.rrd ] || rrdtool create /srv/power/garage.rrd --step 1 \
 DS:ch1:GAUGE:180:0:U \
 DS:ch2:GAUGE:180:0:U \
 DS:ch3:GAUGE:180:0:U \
@@ -19,9 +19,62 @@ RRA:AVERAGE:0.5:30:9600 \
 RRA:AVERAGE:0.5:86400:3650 \
 RRA:MAX:0.5:86400:3650
 
-rrdtool create /srv/power/total.rrd --step 1 \
+[ -f /srv/power/total.rrd ] || rrdtool create /srv/power/total.rrd --step 1 \
 DS:ch1:GAUGE:180:0:U \
 RRA:AVERAGE:0.5:30:9600 \
 RRA:AVERAGE:0.5:86400:3650 \
 RRA:MAX:0.5:86400:3650
 
+[ -f /srv/power/Ella.rrd ] || rrdtool create /srv/power/Ella.rrd --start N --step 300 \
+DS:temp:GAUGE:1200:-40:50 \
+RRA:AVERAGE:0.5:1:2880 \
+RRA:AVERAGE:0.5:6:700 \
+RRA:AVERAGE:0.5:6:700 \
+RRA:AVERAGE:0.5:24:775 \
+RRA:AVERAGE:0.5:144:1500 \
+RRA:AVERAGE:0.5:288:2000 \
+RRA:MIN:0.5:1:600 \
+RRA:MIN:0.5:6:700 \
+RRA:MIN:0.5:24:775 \
+RRA:MIN:0.5:144:1500 \
+RRA:MIN:0.5:288:2000 \
+RRA:MAX:0.5:6:700 \
+RRA:MAX:0.5:24:775 \
+RRA:MAX:0.5:144:1500 \
+RRA:MAX:0.5:288:2000
+
+[ -f /srv/power/Anton.rrd ] || rrdtool create /srv/power/Anton.rrd --start N --step 300 \
+DS:temp:GAUGE:1200:-40:50 \
+RRA:AVERAGE:0.5:1:2880 \
+RRA:AVERAGE:0.5:6:700 \
+RRA:AVERAGE:0.5:6:700 \
+RRA:AVERAGE:0.5:24:775 \
+RRA:AVERAGE:0.5:144:1500 \
+RRA:AVERAGE:0.5:288:2000 \
+RRA:MIN:0.5:1:600 \
+RRA:MIN:0.5:6:700 \
+RRA:MIN:0.5:24:775 \
+RRA:MIN:0.5:144:1500 \
+RRA:MIN:0.5:288:2000 \
+RRA:MAX:0.5:6:700 \
+RRA:MAX:0.5:24:775 \
+RRA:MAX:0.5:144:1500 \
+RRA:MAX:0.5:288:2000
+
+[ -f /srv/power/Matplats.rrd ] || rrdtool create /srv/power/Matplats.rrd --start N --step 300 \
+DS:temp:GAUGE:1200:-40:50 \
+RRA:AVERAGE:0.5:1:2880 \
+RRA:AVERAGE:0.5:6:700 \
+RRA:AVERAGE:0.5:6:700 \
+RRA:AVERAGE:0.5:24:775 \
+RRA:AVERAGE:0.5:144:1500 \
+RRA:AVERAGE:0.5:288:2000 \
+RRA:MIN:0.5:1:600 \
+RRA:MIN:0.5:6:700 \
+RRA:MIN:0.5:24:775 \
+RRA:MIN:0.5:144:1500 \
+RRA:MIN:0.5:288:2000 \
+RRA:MAX:0.5:6:700 \
+RRA:MAX:0.5:24:775 \
+RRA:MAX:0.5:144:1500 \
+RRA:MAX:0.5:288:2000

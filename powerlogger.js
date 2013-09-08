@@ -2,7 +2,7 @@ var net = require('net');
 var xml2js = require('xml2js');
 var rrd = require('../node_rrd/lib/rrd');
 var spawn = require('child_process').spawn;
-
+var http=require('http');
 
 var express=require('express')
     , app = express()
@@ -75,6 +75,9 @@ io.sockets.on('connection', function (socket) {
     socket.emit('power', { garage: garage, house: house });
 });
 
+//
+// Get data from CurrentCost
+//
 var client = new net.Socket();
 client.connect(PORT, HOST, function() {
     console.log('CONNECTED TO: ' + HOST + ':' + PORT);
@@ -156,4 +159,45 @@ function decode_msg( msg ) {
 	console.log( "Unknown: ", msg );
     }
 }
-    
+
+//
+// Get data from 1-wire temperature sensors
+//
+
+var sensors = {
+    Ella: "1F.806908000000/main/28.18333F040000",
+    Anton: "1F.DB6908000000/main/28.FC2F3F040000",
+    Matplats: "1F.B36908000000/main/28.8AEA3E040000"
+};
+
+var sensor;
+
+function read_cb( sensor ) {
+  return function( data ) {
+      rrd.update( rrddir + "/" + sensor + ".rrd", "temp", [["N", data].join(":")], 
+		  function (error) { 
+		      if (error) console.log("Error:", error);
+		  });
+  }
+}
+
+function read_temperatures() {    
+    for( sensor in sensors ) {
+	read_temp( sensors[sensor], read_cb( sensor ) );
+    }
+}
+
+setInterval( read_temperatures, 1000*60*5 );
+read_temperatures();
+
+function read_temp( sensor, cb ) {
+    // There is a bug in owhttpd that makes it return text if
+    // you request json and something similar to json if you
+    // request text. Deal with it...
+    http.get( "http://rpi3:2121/text/" + sensor + "/temperature", function( res ) {
+	    res.on("data", function( data ) {
+		    var m = (""+data).match( /^"\s*(.*)"/ );
+		    cb(parseFloat(m[1]));
+		} );
+	} );
+}
