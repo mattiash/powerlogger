@@ -9,7 +9,7 @@ var express=require('express')
     , server = require('http').createServer(app)
     , io = require('socket.io').listen(server);
 
-var datasets = {
+var powersets = {
     "3h": ["3h", 30],
     "24h": ["24h", 30],
     "48h": ["48h", 30],
@@ -19,14 +19,24 @@ var datasets = {
     "1y": [ "1y", 86400]
 };
 
+var tempsets = {
+    "3h": ["3h", 300],
+    "24h": ["24h", 900],
+    "48h": ["48h", 1800],
+    "1w":  ["8d", 7200],
+    "1m": [ "1month", 10800],
+    "3m": [ "3month", 43200],
+    "1y": [ "1y", 86400]
+};
+
 server.listen(8000);
 
 app.get('/', function (req, res) {
 	res.sendfile(__dirname + '/index.html');
     });
 
-app.get("/data/:data", function(req, res){
-	var p = datasets[req.params.data];
+app.get("/power/:data", function(req, res){
+	var p = powersets[req.params.data];
 	var child = spawn("rrdtool", 
 			  ['xport', '-m', '10000', '-s', 'now-'+p[0], '--step', p[1],
 			   'DEF:g1=/srv/power/garage.rrd:ch1:AVERAGE',
@@ -37,6 +47,25 @@ app.get("/data/:data", function(req, res){
 			   'XPORT:g:Garage',
 			   'CDEF:h=t,g,-',
 			   'XPORT:h:House'
+			   ] );
+	res.set("Content-Type", "application/xml" );
+	child.stdout.on('data', function (data) { res.write(data); return 1 });
+	child.stdout.on('end', function () { res.end() });
+    }
+    );
+
+app.get("/temperature/:data", function(req, res){
+	var p = tempsets[req.params.data];
+	var child = spawn("rrdtool", 
+			  ['xport', '-m', '10000', '-s', 'now-'+p[0], '--step', p[1],
+			   'DEF:Anton=/srv/power/Anton.rrd:temp:AVERAGE',
+			   'DEF:Ella=/srv/power/Ella.rrd:temp:AVERAGE',
+			   'DEF:Matplats=/srv/power/Matplats.rrd:temp:AVERAGE',
+			   'DEF:Utomhus=/srv/power/Utomhus.rrd:temp:AVERAGE',
+			   'XPORT:Anton:Anton',
+			   'XPORT:Ella:Ella',
+			   'XPORT:Matplats:Matplats',
+			   'XPORT:Utomhus:Utomhus'
 			   ] );
 	res.set("Content-Type", "application/xml" );
 	child.stdout.on('data', function (data) { res.write(data); return 1 });
@@ -73,6 +102,7 @@ function handler (req, res) {
 
 io.sockets.on('connection', function (socket) {
     socket.emit('power', { garage: garage, house: house });
+    socket.emit('temperature', sensordata );
 });
 
 //
@@ -171,6 +201,13 @@ var sensors = {
     Utomhus: "1F.806908000000/aux/28.421B3F040000"
 };
 
+var sensordata = {
+    Ella: 0,
+    Anton: 0,
+    Matplats: 0,
+    Utomhus: 0
+}
+
 var sensor;
 
 function read_cb( sensor ) {
@@ -180,6 +217,7 @@ function read_cb( sensor ) {
 		  function (error) { 
 		      if (error) console.log("Error:", error);
 		  });
+      sensordata[sensor] = data;
   }
 }
 

@@ -41,7 +41,12 @@
             <ul class="nav nav-list">
               <li class="nav-header">Power</li>
               <li ng-repeat="item in data.powerItems">
-		<a ng-click="draw_chart(item)">{{ item.title }}</a>
+		<a ng-click="draw_chart(item.url, 'Power ' + item.title, 'W')" 
+		   href="#">{{ item.title }}</a>
+	      </li>
+              <li class="nav-header">Temperature</li>
+              <li ng-repeat="item in data.tempItems">
+		<a ng-click="draw_chart(item.url, 'Temperature ' + item.title, '&deg;C')" href="#">{{ item.title }}</a>
 	      </li>
             </ul>
           </div>
@@ -52,9 +57,14 @@
         </div>
 	<div class="span2">
 	  <div class="well">
-	    <h3>Current</h3>
+	    <h3>Power</h3>
 	    <div>Garage: {{ power.garage }} W</div>
 	    <div>House: {{ power.house }} W</div>
+	    <h3>Temperatures</h3>
+	    <div>Utomhus: {{ temperature.Utomhus }} &deg;C</div>
+	    <div>Anton: {{ temperature.Anton }} &deg;C</div>
+	    <div>Ella: {{ temperature.Ella }} &deg;C</div>
+	    <div>Matplats: {{ temperature.Matplats }} &deg;C</div>
 	  </div>
       </div>
       <hr>
@@ -74,29 +84,49 @@
       function chartController( $scope ) {
         $scope.data = { 
           powerItems: [
-            { title: "Last 3h", url: "data/3h" },
-            { title: "Last 24h", url: "data/24h" },
-            { title: "Last 48h", url: "data/48h" },
-            { title: "Last week", url: "data/1w" },
-            { title: "Last month", url: "data/1m" },
-            { title: "Last 3 months", url: "data/3m" },
-            { title: "Last year", url: "data/1y" }
+            { title: "Last 3h", url: "power/3h" },
+            { title: "Last 24h", url: "power/24h" },
+            { title: "Last 48h", url: "power/48h" },
+            { title: "Last week", url: "power/1w" },
+            { title: "Last month", url: "power/1m" },
+            { title: "Last 3 months", url: "power/3m" },
+            { title: "Last year", url: "power/1y" }
+          ],
+          tempItems: [
+            { title: "Last 3h", url: "temperature/3h" },
+            { title: "Last 24h", url: "temperature/24h" },
+            { title: "Last 48h", url: "temperature/48h" },
+            { title: "Last week", url: "temperature/1w" },
+            { title: "Last month", url: "temperature/1m" },
+            { title: "Last 3 months", url: "temperature/3m" },
+            { title: "Last year", url: "temperature/1y" }
           ]
         }
 
-        $scope.draw_chart = function( item ) {
-          draw_chart( item.url, item.title, "W" ); 
+        $scope.draw_chart = function( url, title, y_label ) {
+          draw_chart( url, title, y_label ); 
         }
       
         $scope.data.current_item = $scope.data.powerItems[0];
-        $scope.draw_chart( $scope.data.current_item );
+        $scope.draw_chart( $scope.data.current_item.url,
+          'Power ' + $scope.data.current_item.title, "W" );
         $scope.power = {};
+        $scope.temperature = {};
 
         var socket = io.connect('http://power.holmlund.se');
         socket.on('power', function (data) {
            $scope.$apply( function() {
              $scope.power.garage = data.garage;
              $scope.power.house = data.house;
+            } );
+        });
+
+        socket.on('temperature', function (data) {
+           $scope.$apply( function() {
+             $scope.temperature.Anton = data.Anton;
+             $scope.temperature.Ella = data.Ella;
+             $scope.temperature.Matplats = data.Matplats;
+             $scope.temperature.Utomhus = data.Utomhus;
             } );
         });
 
