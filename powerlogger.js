@@ -167,13 +167,15 @@ function decode_msg( msg ) {
 var sensors = {
     Ella: "1F.806908000000/main/28.18333F040000",
     Anton: "1F.DB6908000000/main/28.FC2F3F040000",
-    Matplats: "1F.B36908000000/main/28.8AEA3E040000"
+    Matplats: "1F.B36908000000/main/28.8AEA3E040000",
+    Utomhus: "1F.806908000000/aux/28.421B3F040000"
 };
 
 var sensor;
 
 function read_cb( sensor ) {
   return function( data ) {
+      console.log( sensor, data );
       rrd.update( rrddir + "/" + sensor + ".rrd", "temp", [["N", data].join(":")], 
 		  function (error) { 
 		      if (error) console.log("Error:", error);
