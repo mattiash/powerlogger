@@ -164,11 +164,11 @@ function draw_chart( url, title, yaxis ) {
 		text: yaxis
 	    };
 
-	    options.yAxis.min = 0;
+	    options.yAxis.min = -30;
 	    
 	    options.tooltip = {
 		formatter: function() {
-		    return '<b>' + this.series.name + '</b>' + ' ' + this.y.toFixed(0) + " " + yaxis + '<br/>' + Highcharts.dateFormat('%y-%m-%d %H:%M', this.x);
+		    return '<b>' + this.series.name + '</b>' + ' ' + this.y.toFixed(1) + " " + yaxis + '<br/>' + Highcharts.dateFormat('%y-%m-%d %H:%M', this.x);
 		}
 	    },
 	    
