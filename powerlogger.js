@@ -62,10 +62,20 @@ app.get("/temperature/:data", function(req, res){
 			   'DEF:Ella=/srv/power/Ella.rrd:temp:AVERAGE',
 			   'DEF:Matplats=/srv/power/Matplats.rrd:temp:AVERAGE',
 			   'DEF:Utomhus=/srv/power/Utomhus.rrd:temp:AVERAGE',
+			   'DEF:A=/srv/power/A.rrd:temp:AVERAGE',
+			   'DEF:B=/srv/power/B.rrd:temp:AVERAGE',
+			   'DEF:C=/srv/power/C.rrd:temp:AVERAGE',
+			   'DEF:D=/srv/power/D.rrd:temp:AVERAGE',
+			   'DEF:E=/srv/power/E.rrd:temp:AVERAGE',
 			   'XPORT:Anton:Anton',
 			   'XPORT:Ella:Ella',
 			   'XPORT:Matplats:Matplats',
-			   'XPORT:Utomhus:Utomhus'
+			   'XPORT:Utomhus:Utomhus',
+			   'XPORT:A:A',
+			   'XPORT:B:B',
+			   'XPORT:C:C',
+			   'XPORT:D:D',
+			   'XPORT:E:E',
 			   ] );
 	res.set("Content-Type", "application/xml" );
 	child.stdout.on('data', function (data) { res.write(data); return 1 });
@@ -194,18 +204,30 @@ function decode_msg( msg ) {
 // Get data from 1-wire temperature sensors
 //
 
-var sensors = {
-    Ella: "1F.806908000000/main/28.18333F040000",
-    Anton: "1F.DB6908000000/main/28.FC2F3F040000",
-    Matplats: "1F.B36908000000/main/28.8AEA3E040000",
-    Utomhus: "1F.806908000000/aux/28.421B3F040000"
+var room_sensors = {
+    Ella: [ "rpi3", "1F.806908000000/main/28.18333F040000" ],
+    Anton: [ "rpi3", "1F.DB6908000000/main/28.FC2F3F040000" ],
+    Matplats: [ "rpi3", "1F.B36908000000/main/28.8AEA3E040000" ],
+    Utomhus: [ "rpi3", "1F.806908000000/aux/28.421B3F040000" ]
 };
+
+var utility_sensors = {
+    A: [ "rpi4", "28.F55DEC040000" ], // From heater
+    B: [ "rpi4", "28.F4F2EB040000" ], // After bypass and cirkulation pump
+    C: [ "rpi4", "28.C28BEB040000" ], // return from building
+    D: [ "rpi4", "28.8018EC040000" ], // return to heater
+    E: [ "rpi4", "28.8E5599040000" ]  // on bypass
+}
 
 var sensordata = {
     Ella: 0,
     Anton: 0,
     Matplats: 0,
-    Utomhus: 0
+    Utomhus: 0,
+    A: 0,
+    B: 0,
+    C: 0,
+    D: 0
 }
 
 var sensor;
@@ -218,26 +240,40 @@ function read_cb( sensor ) {
 		      if (error) console.log("Error:", error);
 		  });
       sensordata[sensor] = data;
+      io.sockets.emit('temperature', sensordata );
   }
 }
 
-function read_temperatures() {    
-    for( sensor in sensors ) {
-	read_temp( sensors[sensor], read_cb( sensor ) );
+function read_room_temperatures() {    
+    for( sensor in room_sensors ) {
+	read_temp( room_sensors[sensor], read_cb( sensor ) );
     }
 }
 
-setInterval( read_temperatures, 1000*60*5 );
-read_temperatures();
+function read_utility_temperatures() {    
+    for( sensor in utility_sensors ) {
+	read_temp( utility_sensors[sensor], read_cb( sensor ) );
+    }
+}
+
+// Read room temperatures every 5 minutes
+setInterval( read_room_temperatures, 1000*60*5 );
+read_room_temperatures();
+
+// Read utility temperatures every 30 seconds
+setInterval( read_utility_temperatures, 1000*30 );
+read_utility_temperatures();
 
 function read_temp( sensor, cb ) {
     // There is a bug in owhttpd that makes it return text if
     // you request json and something similar to json if you
     // request text. Deal with it...
-    http.get( "http://rpi3:2121/text/" + sensor + "/temperature", function( res ) {
+    http.get( "http://" + sensor[0] + ":2121/text/" + sensor[1] + "/temperature", function( res ) {
 	    res.on("data", function( data ) {
 		    var m = (""+data).match( /^"\s*(.*)"/ );
 		    cb(parseFloat(m[1]));
 		} );
-	} );
+	} ).on('error', function(e) {
+		console.log("read_temp error: " + e.message);
+	    });
 }

@@ -44,7 +44,7 @@
 		<a ng-click="draw_chart(item.url, 'Power ' + item.title, 'W')" 
 		   href="#">{{ item.title }}</a>
 	      </li>
-              <li class="nav-header">Temperature</li>
+              <li class="nav-header">Temp</li>
               <li ng-repeat="item in data.tempItems">
 		<a ng-click="draw_chart(item.url, 'Temperature ' + item.title, '&deg;C')" href="#">{{ item.title }}</a>
 	      </li>
@@ -58,13 +58,18 @@
 	<div class="span2">
 	  <div class="well">
 	    <h3>Power</h3>
-	    <div>Garage: {{ power.garage }} W</div>
-	    <div>House: {{ power.house }} W</div>
-	    <h3>Temperatures</h3>
-	    <div>Utomhus: {{ temperature.Utomhus }} &deg;C</div>
-	    <div>Anton: {{ temperature.Anton }} &deg;C</div>
-	    <div>Ella: {{ temperature.Ella }} &deg;C</div>
-	    <div>Matplats: {{ temperature.Matplats }} &deg;C</div>
+	    <div>Garage: {{ power.garage | number:0 }} W</div>
+	    <div>House: {{ power.house | number:0 }} W</div>
+	    <h3>Temp</h3>
+	    <div>Utomhus: {{ temperature.Utomhus | number:1 }} &deg;C</div>
+	    <div>Anton: {{ temperature.Anton | number:1 }} &deg;C</div>
+	    <div>Ella: {{ temperature.Ella | number:1 }} &deg;C</div>
+	    <div>Matplats: {{ temperature.Matplats | number:1 }} &deg;C</div>
+	    <div>A: {{ temperature.A | number:1 }} &deg;C</div>
+	    <div>B: {{ temperature.B | number:1 }} &deg;C</div>
+	    <div>C: {{ temperature.C | number:1 }} &deg;C</div>
+	    <div>D: {{ temperature.D | number:1 }} &deg;C</div>
+	    <div>E: {{ temperature.E | number:1 }} &deg;C</div>
 	  </div>
       </div>
       <hr>
@@ -123,10 +128,7 @@
 
         socket.on('temperature', function (data) {
            $scope.$apply( function() {
-             $scope.temperature.Anton = data.Anton;
-             $scope.temperature.Ella = data.Ella;
-             $scope.temperature.Matplats = data.Matplats;
-             $scope.temperature.Utomhus = data.Utomhus;
+             $scope.temperature = data;
             } );
         });
 
